@@ -1,3 +1,34 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+///////////////
+////  WiFi  ///
+///////////////
+
+
+/*---------------WiFi-Variables----------------*/
+const char* ssid = "Studysession";  // WiFi name
+const char* pass = "Network1";  // WiFi
+/*---------------------------------------------*/
+
+// Function to connect ESP32 to WiFi
+void setupWiFi(){
+
+    Serial.printf("\nConnecting to %s\n\n", ssid);
+
+    WiFi.begin(ssid,pass);  // Initialize the connection to WiFi network
+
+    // Waiting for the ESP32 to connect to WiFI
+    while (WiFi.status() != WL_CONNECTED){
+        Serial.print(".");
+        delay(100);
+    }
+    Serial.println("\nSuccessfully connected to the WiFi network");
+    Serial.print("Local ESP32 IP: ");
+    Serial.println(WiFi.localIP());
+}
+
+
 ////////////////////
 ////  JoyStick  ////
 ////////////////////
@@ -64,20 +95,15 @@ void getDirection(int x, int y)
 }
 
 
-
-
-
-
 void setup()
 {
     Serial.begin(115200);
     pinMode(xPin, INPUT);
     pinMode(yPin, INPUT);
+    setupWiFi();
 }
 
 void loop()
 {
-    readJoyStickValue(valueX, valueY); // Call analog read function
-    getDirection(valueX,valueY);    // Call direction function
-    delay(500);
+
 }
