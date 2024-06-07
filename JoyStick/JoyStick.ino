@@ -5,7 +5,6 @@
 ////  WiFi  ///
 ///////////////
 
-
 /*---------------WiFi-Variables----------------*/
 const char* ssid = "Studysession";  // WiFi name
 const char* pass = "Network1";  // WiFi
@@ -41,6 +40,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 /*------------------------------------*/
 
+// Function to reconnect to MQTT broker
 void reconnect(){
     while (!client.connected())
     {
@@ -145,12 +145,13 @@ void setup()
     Serial.begin(115200);
     pinMode(xPin, INPUT);
     pinMode(yPin, INPUT);
-    setupWiFi();
-    client.setServer(broker_server, 1883);
+    setupWiFi();    // Call setupWiFi in setup
+    client.setServer(broker_server, 1883);  // Setting up server, based on broker_server and port 
 }
 
 void loop()
 {
+    // Loop reconnect if not connected to broker 
     if(!client.connected()){
         reconnect();
     }
