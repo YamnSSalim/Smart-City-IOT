@@ -1,35 +1,40 @@
 #include <Wire.h>
 
-const int Zumo32U4Address = 4;
-String receivedData = "";
+const int Zumo32U4Address = 0x08; // I2C address of the Zumo32U4
+volatile bool dataReceived = false; // Flag to indicate whether data has been received
+char receivedData[32]; // Stores received data
+int dataLength = 0; // Length of the received data 
 
-
+// Function called when data is received via I2C
 void receiveEvent(int howMany)
 {
-    receivedData = "";
+    dataLength = 0; // Reset the length of the received data 
 
-    while (Wire.available())
-    {
-        char c = Wire.read();
-        receivedData += c;
+
+    // Read all available bytes from the I2C buffer 
+    while (Wire.available() && dataLength < sizeof(receivedData) -1){
+        receivedData[dataLength++] = Wire.read(); //Stores the byte in the buffer
     }
+    receivedData[dataLength] = '\0'; //Null-terminate the string
+    dataReceived = true; // Set the flag to indicate data has been received
 }
 
 void setup()
 {
     Serial.begin(115200);
 
-    Wire.begin(Zumo32U4Address);
-    Wire.onReceive(receiveEvent);
+    Wire.begin(Zumo32U4Address);    // Initialize I2C communication
+    Wire.onReceive(receiveEvent);   // Register the receive event handler
 }
 
 void loop()
 {
-    if (receivedData.length() > 0)
+    // Check if data has been received
+    if (dataReceived)
     {
-        Serial.print("Received joystick data: ");
-        Serial.println(receivedData);
-        receivedData = "";
+        Serial.print("Received data: ");
+        Serial.println(receivedData);   // Print the received data to the serial monitor 
+        dataReceived = false;   // Reset the flag
     }
 }
 

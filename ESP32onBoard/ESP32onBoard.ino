@@ -28,9 +28,9 @@ void setupWiFi()
     Serial.println(WiFi.localIP());
 }
 
-///////////////////////
-///// PubSubClient ////
-///////////////////////
+//////////////////////////////
+///// PubSubClient + I2C  ////
+//////////////////////////////
 
 /*------ PubSubClient-Variables ------*/
 const char *broker_server = "192.168.137.208";
@@ -38,8 +38,11 @@ const char *outTopic = "joystick/data";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+const int zumoAddress = 0x08; // I2C address of the Zumo32U4
 /*-----------------------------------*/
 
+// Function to reconnect to the MQTT broker
 void reconnect()
 {
     while (!client.connected())
@@ -61,14 +64,7 @@ void reconnect()
     }
 }
 
-/////////////////////////////
-///// I2C-Communication /////
-/////////////////////////////
-
-/*------- I2C- Variables --------*/
-int Zumo32U4Address = 4;
-/*-------------------------------*/
-
+// Callback function to handle messages received from the subscribed topic
 void callback(char *topic, byte *message, unsigned int length)
 {
     Serial.print("Message arrived on topic: ");
@@ -76,6 +72,7 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.print(". Message: ");
     String messageTemp;
 
+    // Saving topic data on messageTemp variabel 
     for (int i = 0; i < length; i++)
     {
         Serial.print((char)message[i]);
@@ -84,18 +81,29 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println();
 
     // Send message to Zumo32U4 via I2C
-    Wire.beginTransmission(Zumo32U4Address);
-    Wire.write(messageTemp.c_str(), messageTemp.length());
-    Wire.endTransmission();
+    Wire.beginTransmission(0x08);
+    Wire.write((const uint8_t*)messageTemp.c_str(), messageTemp.length());
+    byte error = Wire.endTransmission();
+
+    // Check if message was send to Zumo32U4
+    if (error == 0)
+    {
+        Serial.print("Message sent to Zumo32U4");
+    }
+    else
+    {
+        Serial.print("Error sending message to Zumo32U4");
+        Serial.println(error);
+    }
 }
 
 void setup()
 {
     Serial.begin(115200);
+    Wire.begin();
     setupWiFi();
     client.setServer(broker_server, 1883);
     client.setCallback(callback);
-    Wire.begin();
 }
 
 void loop()
