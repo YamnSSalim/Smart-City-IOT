@@ -28,19 +28,6 @@ void setupWiFi()
     Serial.println(WiFi.localIP());
 }
 
-
-
-/////////////////////////////
-///// I2C-Communication /////
-/////////////////////////////
-
-/*------- I2C- Variables --------*/
-const int Zumo32U4Address = 0x08;
-/*-------------------------------*/
-
-
-
-
 ///////////////////////
 ///// PubSubClient ////
 ///////////////////////
@@ -74,6 +61,14 @@ void reconnect()
     }
 }
 
+/////////////////////////////
+///// I2C-Communication /////
+/////////////////////////////
+
+/*------- I2C- Variables --------*/
+int Zumo32U4Address = 4;
+/*-------------------------------*/
+
 void callback(char *topic, byte *message, unsigned int length)
 {
     Serial.print("Message arrived on topic: ");
@@ -90,10 +85,9 @@ void callback(char *topic, byte *message, unsigned int length)
 
     // Send message to Zumo32U4 via I2C
     Wire.beginTransmission(Zumo32U4Address);
-    Wire.write(message, length);
+    Wire.write(messageTemp.c_str(), messageTemp.length());
     Wire.endTransmission();
 }
-
 
 void setup()
 {
