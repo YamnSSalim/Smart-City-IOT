@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <Wire.h>
 
 ////////////////
 ///// WiFi /////
@@ -26,6 +27,19 @@ void setupWiFi()
     Serial.print("Local ESP32 IP: ");
     Serial.println(WiFi.localIP());
 }
+
+
+
+/////////////////////////////
+///// I2C-Communication /////
+/////////////////////////////
+
+/*------- I2C- Variables --------*/
+const int Zumo32U4Address = 0x08;
+/*-------------------------------*/
+
+
+
 
 ///////////////////////
 ///// PubSubClient ////
@@ -73,7 +87,13 @@ void callback(char *topic, byte *message, unsigned int length)
         messageTemp += (char)message[i];
     }
     Serial.println();
+
+    // Send message to Zumo32U4 via I2C
+    Wire.beginTransmission(Zumo32U4Address);
+    Wire.write(message, length);
+    Wire.endTransmission();
 }
+
 
 void setup()
 {
@@ -81,6 +101,7 @@ void setup()
     setupWiFi();
     client.setServer(broker_server, 1883);
     client.setCallback(callback);
+    Wire.begin();
 }
 
 void loop()
