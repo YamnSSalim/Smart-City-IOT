@@ -105,8 +105,8 @@ void getDirection(int x, int y)
     if (x > centerValue - tol && x < centerValue + tol && y <= minValue)  
     {
         Serial.print("Direction: ");  
-        Serial.println("UP");
-        direction = "UP";
+        Serial.println("Forward");
+        direction = "Forward";
     }
 
     // Check if the joystick is pushed right
@@ -121,8 +121,8 @@ void getDirection(int x, int y)
     else if (x > centerValue - tol && x < centerValue + tol && y >= maxValue)
     {
         Serial.print("Direction: ");
-        Serial.println("DOWN");
-        direction = "DOWN";
+        Serial.println("Backward");
+        direction = "Backward";
     }
 
     // Check if the joystick is pushed left

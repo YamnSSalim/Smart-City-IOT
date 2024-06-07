@@ -56,6 +56,18 @@ void updateOLEDDisplay(const char* label, const char* message){
 }
 
 
+/////////////////////
+/////// Motor ///////
+/////////////////////
+
+/*----- Motor - Variable -----*/
+Zumo32U4Motors motors;  // Stores library info in variable
+/*----------------------------*/
+
+// Function for foward movement
+void moveForward(){
+    motors.setSpeeds(200,200); // Set both motors to move forward
+}
 
 
 void setup()
@@ -76,6 +88,12 @@ void loop()
 
         // Update the OLED display with the received
         updateOLEDDisplay("Received:", receivedData);
+
+        if (strcmp(receivedData, "Forward") == 0){
+            moveForward();
+        }else{
+            motors.setSpeeds(0,0); // Stop the robot if the command is not "forward"
+        }
 
         dataReceived = false;   // Reset the flag
     }
