@@ -64,6 +64,7 @@ void updateOLEDDisplay(const char *label, const char *message)
     oled.print(message);
 }
 
+
 /////////////////////
 /////// Motor ///////
 /////////////////////
@@ -72,30 +73,8 @@ void updateOLEDDisplay(const char *label, const char *message)
 Zumo32U4Motors motors;            // Stores library info in variable
 /*----------------------------*/
 
-
-
-
-
-void setup()
-{
-    Serial.begin(115200);
-    setupOLED();
-    Wire.begin(Zumo32U4Address);  // Initialize I2C communication
-    Wire.onReceive(receiveEvent); // Register the receive event handler
-    lastDirectionTime = millis(); // Initialize the last direction time
-}
-
-void loop()
-{
-    // Check if data has been received
-    if (dataReceived)
-    {
-        Serial.print("Received data: ");
-        Serial.println(receivedData);    // Print the received data to the serial monitor
-
-        // Update the OLED display with the received
-        updateOLEDDisplay("Received:", receivedData);
-
+// Function to handle the movement based on received data
+void handleMovement(const char *data){
         // Check if the received data indicates "Forward"
         if (strcmp(receivedData, "Forward") == 0)
         {
@@ -123,6 +102,32 @@ void loop()
             motors.setSpeeds(-200,-200); // Set both motors to move backward
             lastDirectionTime = millis();
         }
+}
+
+
+
+void setup()
+{
+    Serial.begin(115200);
+    setupOLED();
+    Wire.begin(Zumo32U4Address);  // Initialize I2C communication
+    Wire.onReceive(receiveEvent); // Register the receive event handler
+    lastDirectionTime = millis(); // Initialize the last direction time
+}
+
+void loop()
+{
+    // Check if data has been received
+    if (dataReceived)
+    {
+        Serial.print("Received data: ");
+        Serial.println(receivedData);    // Print the received data to the serial monitor
+
+        // Update the OLED display with the received
+        updateOLEDDisplay("Received:", receivedData);
+
+        // Hanlde movement based on the received data
+        handleMovement(receivedData);
 
         dataReceived = false;            // Reset the flag
     }
