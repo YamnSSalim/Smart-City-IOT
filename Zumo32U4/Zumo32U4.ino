@@ -1,81 +1,88 @@
 #include <Wire.h>
 #include <Zumo32U4.h>
 
+/////////////////////
+////// Millis ///////
+/////////////////////
+
+/*------------Millis-Variables-----------*/
+unsigned long lastDirectionTime;            // Time of the last direction update
+const unsigned long directionTimeout = 350; // Timeout period in milliseconds
+/*---------------------------------------*/
+
 ///////////////////////////////
 ////// I2C-Communcation ///////
 ///////////////////////////////
 
 /*------------ I2C-Variables ------------*/
-const int Zumo32U4Address = 0x08; // I2C address of the Zumo32U4
-volatile bool dataReceived = false; // Flag to indicate whether data has been received
-char receivedData[32]; // Stores received data
-int dataLength = 0; // Length of the received data 
+const int Zumo32U4Address = 0x08;           // I2C address of the Zumo32U4
+volatile bool dataReceived = false;         // Flag to indicate whether data has been received
+char receivedData[32];                      // Stores received data
+int dataLength = 0;                         // Length of the received data
 /*---------------------------------------*/
-
 
 // Function called when data is received via I2C
 void receiveEvent(int howMany)
 {
-    dataLength = 0; // Reset the length of the received data 
+    dataLength = 0;                                // Reset the length of the received data
 
-
-    // Read all available bytes from the I2C buffer 
-    while (Wire.available() && dataLength < sizeof(receivedData) -1){
-        receivedData[dataLength++] = Wire.read(); //Stores the byte in the buffer
+    // Read all available bytes from the I2C buffer
+    while (Wire.available() && dataLength < sizeof(receivedData) - 1)
+    {
+        receivedData[dataLength++] = Wire.read(); // Stores the byte in the buffer
     }
-    receivedData[dataLength] = '\0'; //Null-terminate the string
-    dataReceived = true; // Set the flag to indicate data has been received
+    receivedData[dataLength] = '\0';              // Null-terminate the string
+    dataReceived = true;                          // Set the flag to indicate data has been received
+    lastDirectionTime = millis();                 // Update the time of the last direction update
 }
-
-
 
 /////////////////////
 /////// OLED ////////
 /////////////////////
 
 /*----- OLED - Variable -----*/
-Zumo32U4OLED oled;  // Stores library info in variable
+Zumo32U4OLED oled; // Stores library info in variable
 /*---------------------------*/
 
 // Function for initialise OLED-screen
-void setupOLED(){
+void setupOLED()
+{
     oled.init();
     oled.setLayout21x8();
     oled.clear();
 }
 
 // Function to update the OLED display with a given message
-void updateOLEDDisplay(const char* label, const char* message){
+void updateOLEDDisplay(const char *label, const char *message)
+{
     oled.clear();
 
-    oled.gotoXY(2,0);
+    oled.gotoXY(2, 0);
     oled.print(label);
 
-    oled.gotoXY(2,2);
+    oled.gotoXY(2, 2);
     oled.print(message);
 }
-
 
 /////////////////////
 /////// Motor ///////
 /////////////////////
 
 /*----- Motor - Variable -----*/
-Zumo32U4Motors motors;  // Stores library info in variable
+Zumo32U4Motors motors;            // Stores library info in variable
 /*----------------------------*/
 
-// Function for foward movement
-void moveForward(){
-    motors.setSpeeds(200,200); // Set both motors to move forward
-}
+
+
 
 
 void setup()
 {
     Serial.begin(115200);
     setupOLED();
-    Wire.begin(Zumo32U4Address);    // Initialize I2C communication
-    Wire.onReceive(receiveEvent);   // Register the receive event handler
+    Wire.begin(Zumo32U4Address);  // Initialize I2C communication
+    Wire.onReceive(receiveEvent); // Register the receive event handler
+    lastDirectionTime = millis(); // Initialize the last direction time
 }
 
 void loop()
@@ -84,20 +91,42 @@ void loop()
     if (dataReceived)
     {
         Serial.print("Received data: ");
-        Serial.println(receivedData);   // Print the received data to the serial monitor 
+        Serial.println(receivedData);    // Print the received data to the serial monitor
 
         // Update the OLED display with the received
         updateOLEDDisplay("Received:", receivedData);
 
-        if (strcmp(receivedData, "Forward") == 0){
-            moveForward();
-        }else{
-            motors.setSpeeds(0,0); // Stop the robot if the command is not "forward"
+        // Check if the received data indicates "Forward"
+        if (strcmp(receivedData, "Forward") == 0)
+        {
+            motors.setSpeeds(200, 200);  // Set both motors to move forward
+            lastDirectionTime = millis();
         }
 
-        dataReceived = false;   // Reset the flag
+        // Check if the received data indicates "RIGHT"
+        if (strcmp(receivedData, "RIGHT") == 0)
+        {
+            motors.setSpeeds(100, -100); // Set right motor forward, left  motor backward
+            lastDirectionTime = millis();
+        }
+
+        // Check if the received data indicates "LEFT"
+        if (strcmp(receivedData, "LEFT") == 0)
+        {
+            motors.setSpeeds(-100,100);  // Set right motor backward, left motor forward 
+            lastDirectionTime = millis();
+        }
+
+        // Check if the received data indicates "Backward"
+        if (strcmp(receivedData, "Backward") == 0)
+        {
+            motors.setSpeeds(-200,-200); // Set both motors to move backward
+            lastDirectionTime = millis();
+        }
+
+        dataReceived = false;            // Reset the flag
+    }
+    if (millis() - lastDirectionTime > directionTimeout){
+        motors.setSpeeds(0,0);           // Set both motors to 0
     }
 }
-
-
-
