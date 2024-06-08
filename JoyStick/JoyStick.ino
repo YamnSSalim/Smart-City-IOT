@@ -80,7 +80,7 @@ void readJoyStickValue(int &x, int &y)
 
 
     //Debugging option
-    
+    /*
     Serial.print(" X-value = ");    // Print X-axis analog value
     Serial.println(x);
 
@@ -88,7 +88,7 @@ void readJoyStickValue(int &x, int &y)
 
     Serial.print(" Y-Value = ");    // Print Y-axis analog value
     Serial.println(y);
-    
+    */
 }
 
 // Function to convert analog values into directions
@@ -97,7 +97,7 @@ void getDirection(int x, int y)
     const int maxValue = 4090;  // Maximal analog value
     const int minValue = 0;     // Minimal analog value
     const int centerValue = 1810;   // Center value 
-    const int tol = 600;        // Tolerance value 
+    const int tol = 500;        // Tolerance value 
 
     String direction;
 

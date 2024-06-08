@@ -81,7 +81,7 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println();
 
     // Send message to Zumo32U4 via I2C
-    Wire.beginTransmission(0x08);
+    Wire.beginTransmission(zumoAddress);
     Wire.write((const uint8_t*)messageTemp.c_str(), messageTemp.length());
     byte error = Wire.endTransmission();
 
