@@ -42,23 +42,25 @@ void receiveEvent(int howMany)
 
 /*--- Encoder-Variables ---*/
 Zumo32U4Encoders encoders;
-int32_t countLeft = 0; 
-int32_t countRight = 0;
+
+int32_t absCountLeft = 0;  // Variable for storing absolute counts on left side
+int32_t absCountRight = 0; // Variable for storing absolute counts on right side
 /*-------------------------*/
 
-// Function for initialise Encoders 
-void setupEncoders(){
+// Function for initialise Encoders
+void setupEncoders()
+{
     encoders.init();
 }
-
-// Function for reading and storing encoder values
-void updateEncoders(){
+// Function for reading and storing absolutte encoder values
+void updateAbsEncoders()
+{
+    // Storing encoder values in variables 
     long Left = encoders.getCountsAndResetLeft();
     long Right = encoders.getCountsAndResetRight();
 
-    countLeft += abs(Left);
-    countRight += abs(Right);
-
+    absCountLeft += abs(Left);
+    absCountRight += abs(Right);
 }
 
 //////////////////////////
@@ -66,33 +68,29 @@ void updateEncoders(){
 //////////////////////////
 
 /*---- Distance-Variables -----*/
-const float wheelDiameter = 0.035;                      // 35 mm converted to meters
-const float wheelCircumference = 2*PI*wheelDiameter;    // Zumo32U4 wheel circumference 
-const float encoderCPR = 909.7;                         // Counts per revolution 
+const float wheelDiameter = 0.035;                       // 35 mm converted to meters
+const float wheelCircumference = 2 * PI * wheelDiameter; // Zumo32U4 wheel circumference
+const float encoderCPR = 909.7;                          // Counts per revolution
 
-int prevCountLeft = 0;                                  // Stores previous left counts
-int prevCountRight = 0;                                 // Stores previous right counts
-
-float distance = 0;                                     // Stores distance calculated 
+float distance = 0; // Stores distance calculated
 /*-----------------------------*/
 
+// Function for updating distance
+void updateDistance()
+{
+    // Calculating distanse
+    float distanceLeft = (absCountLeft * wheelCircumference) / encoderCPR;   
+    float distanceRight = (absCountRight * wheelCircumference) / encoderCPR; 
 
-// Function for updating distance 
-void updateDistance(){
-    float distanceLeft = (countLeft * wheelCircumference) / encoderCPR;     // Calulating distanse on the left side
-    float distanceRight = (countRight * wheelCircumference) / encoderCPR;   // Calculating distanse on the right side 
-
-    distance = (distanceLeft + distanceRight) / 2;                          // updating distance with mean of distanseleft and distanse right
+    distance = (distanceLeft + distanceRight) / 2; // Updating distance 
 }
-
-
 
 /////////////////////
 /////// OLED ////////
 /////////////////////
 
 /*----- OLED - Variables -----*/
-Zumo32U4OLED oled;          // Stores OLED-library info in variable
+Zumo32U4OLED oled; // Stores OLED-library info in variable
 /*---------------------------*/
 
 // Function for initialise OLED-screen
@@ -113,15 +111,14 @@ void directionOLED(const char *label, const char *message)
     oled.print(message);
 }
 
-
-void distanceOLED(int x){
+void distanceOLED(int x)
+{
     oled.clear();
 
-    oled.gotoXY(4,2);
+    oled.gotoXY(4, 2);
     oled.print("Meter: ");
     oled.print(x);
     oled.print("m");
-
 }
 
 /////////////////////
@@ -167,9 +164,9 @@ void handleMovement(const char *data)
 void setup()
 {
     Serial.begin(115200);
-    setupOLED();                  // Calling OLED-setup
-    setupEncoders();              // Calling Encoders-setup
-    
+    setupOLED();     // Calling OLED-setup
+    setupEncoders(); // Calling Encoders-setup
+
     Wire.begin(Zumo32U4Address);  // Initialize I2C communication
     Wire.onReceive(receiveEvent); // Register the receive event handler
 
@@ -181,29 +178,22 @@ void loop()
     // Check if data has been received
     if (dataReceived)
     {
-        // Hanlde movement based on the received data
-        handleMovement(receivedData);
+        handleMovement(receivedData); // Hanlde movement based on the received data
 
-        // Update the OLED display with the joystick direction data 
-        directionOLED("Received:", receivedData);
+        directionOLED("Received:", receivedData); // Update the OLED display with the joystick direction data
 
-        // Calling function to update encoder
-        updateEncoders();
+        updateAbsEncoders(); // Update absolutte encoder values
 
-        // Calling function to update distance
-        updateDistance();
+        updateDistance(); // Update distance
 
-        // Update the OLED display with distance 
-        distanceOLED(distance);
+        distanceOLED(distance); // Update the OLED display with distance
 
         dataReceived = false; // Reset the flag
     }
 
-    // Check if any data has arrived if not the motor stops 
+    // Check if any data has arrived if not the motor stops
     if (millis() - lastDirectionTime > directionTimeout)
     {
         motors.setSpeeds(0, 0); // Set both motors to 0
     }
-
-
 }
