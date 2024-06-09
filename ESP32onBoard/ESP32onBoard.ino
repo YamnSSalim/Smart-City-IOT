@@ -35,7 +35,9 @@ void setupWiFi()
 /*------ PubSubClient-Variables ------*/
 const char *broker_server = "192.168.137.208";
 const char *outTopic = "joystick/data"; // MQTT topic for joystick data
-const char *inTopic = "zumo32u4/data"; // MQTT topic for zumo32u4 data
+const char *inTopic_1 = "distance/zumo32u4"; // MQTT topic for distance data
+const char *inTopic_2 = "speed/zumo32u4"; // MQTT topic for speed data
+
 
 
 WiFiClient espClient;
@@ -45,6 +47,7 @@ const int zumoAddress = 0x08; // I2C address of the Zumo32U4
 
 
 float distance;     // Variable to store received distance data
+float speed;        // Variable to store received distance data
 
 unsigned long lastRequestTime = 0; // Time of the last I2C request
 const unsigned long requestInterval = 1000; // Interval between I2C request 
@@ -127,21 +130,42 @@ void loop()
     // Check if its time to request data from the Zumo32U4
     if (currentTime - lastRequestTime >= requestInterval){
 
-        Wire.requestFrom(zumoAddress, sizeof(distance));
+        // Request distance and speed data from Z>umo32U4
+        Wire.requestFrom(zumoAddress, sizeof(distance) + sizeof(speed));
 
-        if (Wire.available() == sizeof(distance)){
+
+        if (Wire.available() == sizeof(distance) + sizeof(speed)){
+
+            // Read distance data
             Wire.readBytes((char*)&distance, sizeof(distance));
 
-            // Convert the distance to a string
+            // Read speed data
+            Wire.readBytes((char *)&speed,sizeof(speed));
 
+            // Convert the distance to a string
             char distanceStr[10];
             dtostrf(distance, 5, 2, distanceStr);
-            // Print the received distance
-             Serial.print("Received distance: ");
-            Serial.println(distanceStr);
+
+            // Convert the speed to a string
+            char speedStr[10];
+            dtostrf(speed, 5, 2, speedStr);
 
             // Publish the distance to the MQTT broker
-            client.publish(inTopic,distanceStr);
+            client.publish(inTopic_1,distanceStr);
+
+            // Publish the speed to the MQTT broker
+            client.publish(inTopic_2, speedStr);
+
+            // Print the received distance
+            Serial.print("Received distance: ");
+            Serial.println(distanceStr);
+
+            // Print the received speed
+            Serial.print("Received speed: ");
+            Serial.println(speedStr);
+        } 
+        else{
+            Serial.print("Error: Data not available from Zumo32U4");
         }
 
         // Update the last request time

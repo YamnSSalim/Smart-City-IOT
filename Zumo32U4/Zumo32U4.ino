@@ -87,6 +87,28 @@ void updateDistance()
 }
 
 
+/////////////////////////
+//// Calculate Speed ////
+/////////////////////////
+
+/*--- Speed -Variables ---*/
+float speed = 0; // Stores speed calculated 
+unsigned long lastSpeedTime = 0; // Time of the last speed calculation 
+float previousDistance = 0; // Stores previous distance
+/*-------------------------*/
+
+// Function for updating speed
+void updateSpeed(){
+    unsigned long currentTime = millis(); // Get the current time
+    float timeInterval = (currentTime - lastSpeedTime) / 1000.0; // Calculate the time interval 
+
+    if (timeInterval > 0) {
+        speed = (distance - previousDistance) / timeInterval;
+    }
+    previousDistance = distance;
+    lastSpeedTime = currentTime;
+}
+
 
 /////////////////////
 /////// OLED ////////
@@ -118,6 +140,10 @@ void updateOLED()
     oled.print(distance); // Update OLED display with distance values
     oled.print(" m");
 
+    oled.gotoXY(2, 4);
+    oled.print("Speed: ");
+    oled.print(speed); // Update OLED display with distance values
+    oled.print(" m/s");
 
 }
 
@@ -169,7 +195,8 @@ void handleMovement(const char *data)
 
 // Function called when data is requested via I2C
 void requestEvent(){
-    Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance aas raw bytes
+    Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance as raw bytes
+    Wire.write((uint8_t*)&speed,sizeof(speed)); // Send the speed as raw bytes 
 }
 
 void setup()
@@ -183,6 +210,7 @@ void setup()
     Wire.onRequest(requestEvent); // Register the request event handler
 
     lastDirectionTime = millis(); // Initialize the last direction time
+    lastSpeedTime = millis();     // Initialze the last speed time
 }
 
 void loop()
@@ -196,6 +224,7 @@ void loop()
 
         updateDistance(); // Update distance
 
+        updateSpeed(); // Update speed
 
         updateOLED(); // Displaying values on OLED screen        
 
