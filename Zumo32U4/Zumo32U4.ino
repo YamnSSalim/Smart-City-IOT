@@ -36,6 +36,8 @@ void receiveEvent(int howMany)
     lastDirectionTime = millis();    // Update the time of the last direction update
 }
 
+/*---------- SpeedOmeter Information ---------------*/
+
 //////////////////////
 ////// Encoder ///////
 //////////////////////
@@ -61,7 +63,6 @@ void updateAbsEncoders()
 
     absCountLeft += abs(Left);
     absCountRight += abs(Right);
-
 }
 
 //////////////////////////
@@ -86,48 +87,71 @@ void updateDistance()
     distance = (distanceLeft + distanceRight) / 2; // Updating distance
 }
 
-
 /////////////////////////
 //// Calculate Speed ////
 /////////////////////////
 
 /*--- Speed -Variables ---*/
-float speed = 0; // Stores speed calculated 
-unsigned long lastSpeedTime = 0; // Time of the last speed calculation 
-float previousDistance = 0; // Stores previous distance
+float speed = 0;                 // Stores speed calculated
+unsigned long lastSpeedTime = 0; // Time of the last speed calculation
+float previousDistance = 0;      // Stores previous distance
 /*-------------------------*/
 
 // Function for updating speed
-void updateSpeed(){
-    unsigned long currentTime = millis(); // Get the current time
-    float timeInterval = (currentTime - lastSpeedTime) / 1000.0; // Calculate the time interval 
+void updateSpeed()
+{
+    unsigned long currentTime = millis();                        // Get the current time
+    float timeInterval = (currentTime - lastSpeedTime) / 1000.0; // Calculate the time interval
 
-    if (timeInterval > 0) {
+    if (timeInterval > 0)
+    {
         speed = (distance - previousDistance) / timeInterval;
     }
     previousDistance = distance;
     lastSpeedTime = currentTime;
 }
 
+/*----------------------------------------------------------------*/
 
-
-
-
-////////////////////////////
-//// Battery Monitoring ////
-////////////////////////////
+/*------------- Software-Battery Information --------------------*/
 
 /*---- Battery-Variables ----*/
-uint16_t batteryMillivolts = 0;    // Stores battery voltage in millivolts
+uint8_t batteryLevel = 100; // Battery voltage in millivolts
 /*---------------------------*/
 
-// Function for updating battery voltage
-void updateBattery(){
-    batteryMillivolts = readBatteryMillivolts();
+////////////////////////////
+/// Discharge Simulation ///
+////////////////////////////
+
+/*---- Discharge-Variables ----*/
+float dischargeRate = 0; // Stores the discharge rate
+unsigned long lastDischargeTime = 0;
+/*---------------------------------------------------------------*/
+
+// Function for simulating battery discharge
+void updateBatteryDischarge(float distance, float speed)
+{
+    unsigned long currentTime = millis();
+
+    if (currentTime - lastDischargeTime >= 1000)
+    {
+
+        float baseDischargeRate = 0.1;          // A discharge rate
+        float distanceImpact = distance * 0.01; // Impact of distance on discharge
+        float speedImpact = speed * 0.05;       // Impact of speed on discharge
+        dischargeRate = baseDischargeRate + distanceImpact + speedImpact;
+
+        if (batteryLevel > dischargeRate)
+        {
+            batteryLevel -= dischargeRate;
+        }
+        else
+        {
+            batteryLevel = 0;
+        }
+        lastDischargeTime = currentTime;
+    }
 }
-
-
-
 
 /////////////////////
 /////// OLED ////////
@@ -145,8 +169,8 @@ void setupOLED()
     oled.clear();
 }
 
-// Function to update the OLED display with directions
-void updateOLED()
+// Function to update the first OLED display
+void updateOLED1()
 {
     oled.clear();
 
@@ -163,16 +187,24 @@ void updateOLED()
     oled.print("Speed: ");
     oled.print(speed); // Update OLED display with distance values
     oled.print(" m/s");
-
-    oled.gotoXY(2, 6);
-    oled.print("Battery: ");
-    oled.print(speed); // Update OLED display with battery values
-    oled.print(" mV");
-
-
 }
 
+// Function to update the second OLED display
+void updateOLED2()
+{
 
+    oled.clear();
+
+    oled.gotoXY(2, 0);
+    oled.print("Battery: ");
+    oled.print(batteryLevel); // Update OLED display with battery values
+    oled.print(" %");
+
+    oled.gotoXY(2, 2);
+    oled.print("Discharge: ");
+    oled.print(dischargeRate); // Update OLED display with discharge values
+    oled.print(" mV");
+}
 
 /////////////////////
 /////// Motor ///////
@@ -219,9 +251,10 @@ void handleMovement(const char *data)
 ////////////////////
 
 // Function called when data is requested via I2C
-void requestEvent(){
+void requestEvent()
+{
     Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance as raw bytes
-    Wire.write((uint8_t*)&speed,sizeof(speed)); // Send the speed as raw bytes 
+    Wire.write((uint8_t *)&speed, sizeof(speed));       // Send the speed as raw bytes
 }
 
 void setup()
@@ -251,9 +284,11 @@ void loop()
 
         updateSpeed(); // Update speed
 
-        updateBattery(); // Update battery
+        updateBatteryDischarge(distance, speed); // Update discharge
 
-        updateOLED(); // Displaying values on OLED screen        
+        // updateOLED1(); // Displaying values of OLED screen 1
+
+        updateOLED2(); // Displaying values of OLED screen 2
 
         dataReceived = false; // Reset the flag
     }
