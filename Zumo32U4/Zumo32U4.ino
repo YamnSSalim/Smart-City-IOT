@@ -43,8 +43,8 @@ void receiveEvent(int howMany)
 /*--- Encoder-Variables ---*/
 Zumo32U4Encoders encoders;
 
-int32_t absCountLeft = 0;  // Variable for storing absolute counts on left side
-int32_t absCountRight = 0; // Variable for storing absolute counts on right side
+int32_t absCountLeft = 0;  // Variable for storing counts on left side
+int32_t absCountRight = 0; // Variable for storing counts on right side
 /*-------------------------*/
 
 // Function for initialise Encoders
@@ -55,12 +55,13 @@ void setupEncoders()
 // Function for reading and storing absolutte encoder values
 void updateAbsEncoders()
 {
-    // Storing encoder values in variables 
+    // Storing encoder values in variables
     long Left = encoders.getCountsAndResetLeft();
     long Right = encoders.getCountsAndResetRight();
 
     absCountLeft += abs(Left);
     absCountRight += abs(Right);
+
 }
 
 //////////////////////////
@@ -79,11 +80,13 @@ float distance = 0; // Stores distance calculated
 void updateDistance()
 {
     // Calculating distanse
-    float distanceLeft = (absCountLeft * wheelCircumference) / encoderCPR;   
-    float distanceRight = (absCountRight * wheelCircumference) / encoderCPR; 
+    float distanceLeft = (absCountLeft * wheelCircumference) / encoderCPR;
+    float distanceRight = (absCountRight * wheelCircumference) / encoderCPR;
 
-    distance = (distanceLeft + distanceRight) / 2; // Updating distance 
+    distance = (distanceLeft + distanceRight) / 2; // Updating distance
 }
+
+
 
 /////////////////////
 /////// OLED ////////
@@ -102,24 +105,23 @@ void setupOLED()
 }
 
 // Function to update the OLED display with directions
-void directionOLED(const char *label, const char *message)
+void updateOLED()
 {
     oled.clear();
+
+    oled.gotoXY(2, 0);
+    oled.print("Input: ");
+    oled.print(receivedData); // Update the OLED display with the joystick direction data
 
     oled.gotoXY(2, 2);
-    oled.print(label);
-    oled.print(message);
-}
-
-void distanceOLED(int x)
-{
-    oled.clear();
-
-    oled.gotoXY(4, 2);
     oled.print("Meter: ");
-    oled.print(x);
-    oled.print("m");
+    oled.print(distance); // Update OLED display with distance values
+    oled.print(" m");
+
+
 }
+
+
 
 /////////////////////
 /////// Motor ///////
@@ -161,6 +163,15 @@ void handleMovement(const char *data)
     }
 }
 
+////////////////////
+//// I2C-Sender ////
+////////////////////
+
+// Function called when data is requested via I2C
+void requestEvent(){
+    Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance aas raw bytes
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -169,6 +180,7 @@ void setup()
 
     Wire.begin(Zumo32U4Address);  // Initialize I2C communication
     Wire.onReceive(receiveEvent); // Register the receive event handler
+    Wire.onRequest(requestEvent); // Register the request event handler
 
     lastDirectionTime = millis(); // Initialize the last direction time
 }
@@ -180,13 +192,12 @@ void loop()
     {
         handleMovement(receivedData); // Hanlde movement based on the received data
 
-        directionOLED("Received:", receivedData); // Update the OLED display with the joystick direction data
-
-        updateAbsEncoders(); // Update absolutte encoder values
+        updateAbsEncoders(); // Update encoder values
 
         updateDistance(); // Update distance
 
-        distanceOLED(distance); // Update the OLED display with distance
+
+        updateOLED(); // Displaying values on OLED screen        
 
         dataReceived = false; // Reset the flag
     }

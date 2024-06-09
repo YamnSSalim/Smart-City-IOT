@@ -34,12 +34,20 @@ void setupWiFi()
 
 /*------ PubSubClient-Variables ------*/
 const char *broker_server = "192.168.137.208";
-const char *outTopic = "joystick/data";
+const char *outTopic = "joystick/data"; // MQTT topic for joystick data
+const char *inTopic = "zumo32u4/data"; // MQTT topic for zumo32u4 data
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 const int zumoAddress = 0x08; // I2C address of the Zumo32U4
+
+
+float distance;     // Variable to store received distance data
+
+unsigned long lastRequestTime = 0; // Time of the last I2C request
+const unsigned long requestInterval = 1000; // Interval between I2C request 
 /*-----------------------------------*/
 
 // Function to reconnect to the MQTT broker
@@ -113,4 +121,31 @@ void loop()
         reconnect();
     }
     client.loop();
+
+    unsigned long currentTime = millis();
+
+    // Check if its time to request data from the Zumo32U4
+    if (currentTime - lastRequestTime >= requestInterval){
+
+        Wire.requestFrom(zumoAddress, sizeof(distance));
+
+        if (Wire.available() == sizeof(distance)){
+            Wire.readBytes((char*)&distance, sizeof(distance));
+
+            // Convert the distance to a string
+
+            char distanceStr[10];
+            dtostrf(distance, 5, 2, distanceStr);
+            // Print the received distance
+             Serial.print("Received distance: ");
+            Serial.println(distanceStr);
+
+            // Publish the distance to the MQTT broker
+            client.publish(inTopic,distanceStr);
+        }
+
+        // Update the last request time
+        lastRequestTime = currentTime;
+    }
+    
 }
