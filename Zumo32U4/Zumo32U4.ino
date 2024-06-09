@@ -116,7 +116,7 @@ void updateSpeed()
 /*------------- Software-Battery Information --------------------*/
 
 /*---- Battery-Variables ----*/
-uint8_t batteryLevel = 100; // Battery voltage in millivolts
+float batteryLevel = 100; // Battery voltage in millivolts
 /*---------------------------*/
 
 ////////////////////////////
@@ -255,6 +255,7 @@ void requestEvent()
 {
     Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance as raw bytes
     Wire.write((uint8_t *)&speed, sizeof(speed));       // Send the speed as raw bytes
+    Wire.write((uint8_t *)&batteryLevel, sizeof(batteryLevel)); // Send the batterylevel as raw bytes 
 }
 
 void setup()

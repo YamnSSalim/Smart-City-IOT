@@ -35,8 +35,10 @@ void setupWiFi()
 /*------ PubSubClient-Variables ------*/
 const char *broker_server = "192.168.137.208";
 const char *outTopic = "joystick/data"; // MQTT topic for joystick data
+
 const char *inTopic_1 = "distance/zumo32u4"; // MQTT topic for distance data
 const char *inTopic_2 = "speed/zumo32u4"; // MQTT topic for speed data
+const char *inTopic_3 = "batterylevel/zumo32u4"; // MQTT topic for baterylevel data 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -44,7 +46,8 @@ PubSubClient client(espClient);
 const int zumoAddress = 0x08; // I2C address of the Zumo32U4
 
 float distance;     // Variable to store received distance data
-float speed;        // Variable to store received distance data
+float speed;        // Variable to store received speed data
+float batteryLevel; // Variable to store received batterylevel data 
 
 unsigned long lastRequestTime = 0; // Time of the last I2C request
 const unsigned long requestInterval = 1000; // Interval between I2C request 
@@ -128,16 +131,19 @@ void loop()
     if (currentTime - lastRequestTime >= requestInterval){
 
         // Request distance and speed data from Z>umo32U4
-        Wire.requestFrom(zumoAddress, sizeof(distance) + sizeof(speed));
+        Wire.requestFrom(zumoAddress, sizeof(distance) + sizeof(speed) + sizeof(batteryLevel));
 
 
-        if (Wire.available() == sizeof(distance) + sizeof(speed)){
+        if (Wire.available() == sizeof(distance) + sizeof(speed) + sizeof(batteryLevel)){
 
             // Read distance data
             Wire.readBytes((char*)&distance, sizeof(distance));
 
             // Read speed data
-            Wire.readBytes((char *)&speed,sizeof(speed));
+            Wire.readBytes((char*)&speed,sizeof(speed));
+
+            // Read batterylevel data
+            Wire.readBytes((char*)&batteryLevel, sizeof(batteryLevel));
 
             // Convert the distance to a string
             char distanceStr[10];
@@ -147,11 +153,18 @@ void loop()
             char speedStr[10];
             dtostrf(speed, 5, 2, speedStr);
 
+            // Convert the batterylevel to a string 
+            char batterylevelStr[10];
+            dtostrf(batteryLevel, 5, 2, batterylevelStr);
+
             // Publish the distance to the MQTT broker
             client.publish(inTopic_1,distanceStr);
 
             // Publish the speed to the MQTT broker
             client.publish(inTopic_2, speedStr);
+
+            //Publish the batterylevel to the MQTT broker
+            client.publish(inTopic_3, batterylevelStr);
 
             // Print the received distance
             Serial.print("Received distance: ");
@@ -160,6 +173,10 @@ void loop()
             // Print the received speed
             Serial.print("Received speed: ");
             Serial.println(speedStr);
+
+            // Print the received batterylevel
+            Serial.print("Received batterylevel: ");
+            Serial.println(batterylevelStr);
         } 
         else{
             Serial.print("Error: Data not available from Zumo32U4");
