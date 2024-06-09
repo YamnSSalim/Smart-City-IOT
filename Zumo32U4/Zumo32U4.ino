@@ -110,6 +110,25 @@ void updateSpeed(){
 }
 
 
+
+
+
+////////////////////////////
+//// Battery Monitoring ////
+////////////////////////////
+
+/*---- Battery-Variables ----*/
+uint16_t batteryMillivolts = 0;    // Stores battery voltage in millivolts
+/*---------------------------*/
+
+// Function for updating battery voltage
+void updateBattery(){
+    batteryMillivolts = readBatteryMillivolts();
+}
+
+
+
+
 /////////////////////
 /////// OLED ////////
 /////////////////////
@@ -144,6 +163,12 @@ void updateOLED()
     oled.print("Speed: ");
     oled.print(speed); // Update OLED display with distance values
     oled.print(" m/s");
+
+    oled.gotoXY(2, 6);
+    oled.print("Battery: ");
+    oled.print(speed); // Update OLED display with battery values
+    oled.print(" mV");
+
 
 }
 
@@ -225,6 +250,8 @@ void loop()
         updateDistance(); // Update distance
 
         updateSpeed(); // Update speed
+
+        updateBattery(); // Update battery
 
         updateOLED(); // Displaying values on OLED screen        
 

@@ -140,6 +140,16 @@ void getDirection(int x, int y)
 }
 
 
+////////////////
+//// Millis ////
+////////////////
+
+/*---- Millis-Variables ----*/
+unsigned long previousMillis = 0; // Stores the last time the joystick was read
+const long interval = 100;        // Interval in millieseconds to read joystick 
+/*--------------------------*/
+
+
 void setup()
 {
     Serial.begin(115200);
@@ -157,12 +167,22 @@ void loop()
     }
     client.loop();
 
-    // Read joystick values
-    readJoyStickValue(valueX, valueY);
+    unsigned long currentMillis = millis(); // Get the current time
 
-    // Get joystick direction and publish to MQTT
-    getDirection(valueX, valueY);
+    //Check if the interval has passed
+    if (currentMillis - previousMillis >= interval){
+        
+        // Read joystick values
+        readJoyStickValue(valueX, valueY);
 
-    delay(100);
+        // Get joystick direction and publish to MQTT
+        getDirection(valueX, valueY);
+
+        previousMillis = currentMillis;     // Save the current time 
+    }
+
+
+
+
 
 }

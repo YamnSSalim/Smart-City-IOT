@@ -38,13 +38,10 @@ const char *outTopic = "joystick/data"; // MQTT topic for joystick data
 const char *inTopic_1 = "distance/zumo32u4"; // MQTT topic for distance data
 const char *inTopic_2 = "speed/zumo32u4"; // MQTT topic for speed data
 
-
-
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 const int zumoAddress = 0x08; // I2C address of the Zumo32U4
-
 
 float distance;     // Variable to store received distance data
 float speed;        // Variable to store received distance data
