@@ -253,9 +253,10 @@ void handleMovement(const char *data)
 // Function called when data is requested via I2C
 void requestEvent()
 {
-    Wire.write((uint8_t *)&distance, sizeof(distance)); // Send the distance as raw bytes
-    Wire.write((uint8_t *)&speed, sizeof(speed));       // Send the speed as raw bytes
-    Wire.write((uint8_t *)&batteryLevel, sizeof(batteryLevel)); // Send the batterylevel as raw bytes 
+    Wire.write((uint8_t *)&distance, sizeof(distance));           // Send the distance as raw bytes
+    Wire.write((uint8_t *)&speed, sizeof(speed));                 // Send the speed as raw bytes
+    Wire.write((uint8_t *)&batteryLevel, sizeof(batteryLevel));   // Send the batterylevel as raw bytes
+    Wire.write((uint8_t *)&dischargeRate, sizeof(dischargeRate)); // Send the discharge rate as raw bytes
 }
 
 void setup()
@@ -287,9 +288,10 @@ void loop()
 
         updateBatteryDischarge(distance, speed); // Update discharge
 
-        // updateOLED1(); // Displaying values of OLED screen 1
+        updateOLED1(); // Displaying values of OLED screen 1
 
-        updateOLED2(); // Displaying values of OLED screen 2
+        //updateOLED2(); // Displaying values of OLED screen 2
+
 
         dataReceived = false; // Reset the flag
     }
@@ -299,4 +301,7 @@ void loop()
     {
         motors.setSpeeds(0, 0); // Set both motors to 0
     }
+
+
+
 }
